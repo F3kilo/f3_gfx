@@ -1,5 +1,7 @@
 pub mod back;
+pub mod error;
 pub mod managers;
+pub mod texture;
 
 #[macro_use]
 extern crate slog;
