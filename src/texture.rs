@@ -62,7 +62,7 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn new(path: PathBuf, manager: TextureManager) -> Result<Self, LoadError> {
+    pub fn load(path: PathBuf, manager: TextureManager) -> Result<Self, LoadError> {
         UniqueTexture::load(path, manager).map(|unique| Self {
             unique: Arc::new(unique),
         })
