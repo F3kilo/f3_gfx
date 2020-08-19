@@ -1,16 +1,18 @@
 pub mod back;
+pub mod managers;
 
 #[macro_use]
 extern crate slog;
 
 use crate::back::GraphicsBackend;
+use crate::managers::tex::TextureManager;
 use slog::Logger;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Graphics {
-    logger: Logger,
     backend: Arc<Mutex<Box<dyn GraphicsBackend>>>,
+    logger: Logger,
 }
 
 impl Graphics {
@@ -26,6 +28,10 @@ impl Graphics {
     ) -> Box<dyn GraphicsBackend> {
         let mut mut_back = self.backend.lock().unwrap();
         std::mem::replace(&mut mut_back, new_backend)
+    }
+
+    pub fn get_texture_manager(&self) -> TextureManager {
+        TextureManager::new(self.backend.clone(), self.logger.clone())
     }
 }
 
