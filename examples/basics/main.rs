@@ -35,6 +35,6 @@ fn init_second_backend(logger: Logger) -> Box<dyn GraphicsBackend> {
 }
 
 fn use_graphics(graphics: &Graphics) {
-    let tex1 = Texture::new("First tex path".into(), graphics.get_texture_manager()).unwrap();
-    let tex2 = Texture::new("Second tex path".into(), graphics.get_texture_manager()).unwrap();
+    let tex1 = Texture::load("First tex path".into(), graphics.get_texture_manager()).unwrap();
+    let tex2 = Texture::load("Second tex path".into(), graphics.get_texture_manager()).unwrap();
 }
