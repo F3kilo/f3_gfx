@@ -7,6 +7,7 @@ extern crate slog;
 use crate::first_back::FirstBack;
 use crate::second_back::SecondBack;
 use f3_gfx::back::GraphicsBackend;
+use f3_gfx::geometry::Geometry;
 use f3_gfx::texture::Texture;
 use slog::{Drain, Logger};
 
@@ -15,9 +16,13 @@ fn main() {
     let back = init_first_backend(logger.clone());
     let mut graphics = Graphics::new(back, Some(logger.clone()));
 
+    info!(logger, "First graphics usage:");
     use_graphics(&graphics);
 
+    info!(logger, "Replace backend...");
     graphics.replace_backend(init_second_backend(logger.clone()));
+
+    info!(logger, "Second graphics usage:");
     use_graphics(&graphics)
 }
 
@@ -35,6 +40,9 @@ fn init_second_backend(logger: Logger) -> Box<dyn GraphicsBackend> {
 }
 
 fn use_graphics(graphics: &Graphics) {
-    let tex1 = Texture::load("First tex path".into(), graphics.get_texture_manager()).unwrap();
-    let tex2 = Texture::load("Second tex path".into(), graphics.get_texture_manager()).unwrap();
+    let _tex1 = Texture::load("First tex path".into(), graphics.get_texture_manager()).unwrap();
+    let _geom1 = Geometry::load("First tex path".into(), graphics.get_geometry_manager()).unwrap();
+
+    let _tex2 = Texture::load("Second tex path".into(), graphics.get_texture_manager()).unwrap();
+    let _geom2 = Geometry::load("Second tex path".into(), graphics.get_geometry_manager()).unwrap();
 }

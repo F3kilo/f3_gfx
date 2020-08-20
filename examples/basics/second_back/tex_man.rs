@@ -22,7 +22,7 @@ impl SecondBackTextureManager {
 }
 
 impl ManageTextures for SecondBackTextureManager {
-    fn load_texture(&mut self, path: PathBuf) -> Result<TextureId, LoadError> {
+    fn load_texture(&mut self, _path: PathBuf) -> Result<TextureId, LoadError> {
         let id = TEXTURE_ID_COUNTER.fetch_add(1, Ordering::Relaxed).into();
         info!(self.logger, "SecondBackTextureManager loads: {:?}", id);
         self.textures.insert(id);
