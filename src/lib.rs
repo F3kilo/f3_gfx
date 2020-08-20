@@ -1,6 +1,6 @@
-pub mod geometry;
 pub mod back;
 pub mod error;
+pub mod geometry;
 pub mod managers;
 pub mod texture;
 
@@ -8,10 +8,10 @@ pub mod texture;
 extern crate slog;
 
 use crate::back::GraphicsBackend;
+use crate::managers::geom::GeometryManager;
 use crate::managers::tex::TextureManager;
 use slog::Logger;
 use std::sync::{Arc, Mutex};
-use crate::managers::geom::GeometryManager;
 
 #[derive(Clone)]
 pub struct Graphics {
@@ -37,16 +37,8 @@ impl Graphics {
     pub fn get_texture_manager(&self) -> TextureManager {
         TextureManager::new(self.backend.clone(), self.logger.clone())
     }
-    
+
     pub fn get_geometry_manager(&self) -> GeometryManager {
         GeometryManager::new(self.backend.clone(), self.logger.clone())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }
