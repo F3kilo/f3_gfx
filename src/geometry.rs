@@ -30,7 +30,7 @@ impl Drop for UniqueGeometry {
 
 impl fmt::Debug for UniqueGeometry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Texture #{:?}", self.id)
+        write!(f, "Geometry #{:?}", self.id)
     }
 }
 
@@ -49,11 +49,11 @@ impl Hash for UniqueGeometry {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Texture {
+pub struct Geometry {
     unique: Arc<UniqueGeometry>,
 }
 
-impl Texture {
+impl Geometry {
     pub fn load(path: PathBuf, manager: GeometryManager) -> Result<Self, LoadError> {
         UniqueGeometry::load(path, manager).map(|unique| Self {
             unique: Arc::new(unique),

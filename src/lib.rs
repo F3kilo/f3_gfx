@@ -1,4 +1,4 @@
-mod geometry;
+pub mod geometry;
 pub mod back;
 pub mod error;
 pub mod managers;
