@@ -1,8 +1,5 @@
-use crate::back::error::LoadError;
-use std::path::PathBuf;
-
 pub trait ManageScenes {
-    fn create_scene(&mut self, path: PathBuf) -> Result<SceneId, LoadError>;
+    fn create_scene(&mut self) -> SceneId;
     fn drop_scene(&mut self, id: SceneId) -> bool;
 
     fn contains(&self, id: SceneId) -> bool;

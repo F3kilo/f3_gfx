@@ -1,8 +1,6 @@
-use crate::back::error::LoadError;
 use crate::back::man_scene::SceneId;
 use crate::back::GraphicsBackend;
 use slog::Logger;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Clone)]
@@ -16,10 +14,10 @@ impl SceneManager {
         Self { backend, logger }
     }
 
-    pub fn create_scene(&mut self, path: PathBuf) -> Result<SceneId, LoadError> {
+    pub fn create_scene(&mut self) -> SceneId {
         self.get_mut_backend()
             .get_mut_scene_manager()
-            .create_scene(path)
+            .create_scene()
     }
 
     pub fn drop_scene(&mut self, id: SceneId) -> bool {
