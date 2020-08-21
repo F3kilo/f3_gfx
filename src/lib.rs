@@ -2,6 +2,7 @@ pub mod back;
 pub mod error;
 pub mod geometry;
 pub mod managers;
+pub mod scene;
 pub mod texture;
 
 #[macro_use]
