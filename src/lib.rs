@@ -9,6 +9,7 @@ extern crate slog;
 
 use crate::back::GraphicsBackend;
 use crate::managers::geom::GeometryManager;
+use crate::managers::scene::SceneManager;
 use crate::managers::tex::TextureManager;
 use slog::Logger;
 use std::sync::{Arc, Mutex};
@@ -40,5 +41,9 @@ impl Graphics {
 
     pub fn get_geometry_manager(&self) -> GeometryManager {
         GeometryManager::new(self.backend.clone(), self.logger.clone())
+    }
+
+    pub fn get_scene_manager(&self) -> SceneManager {
+        SceneManager::new(self.backend.clone(), self.logger.clone())
     }
 }
