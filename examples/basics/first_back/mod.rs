@@ -1,9 +1,12 @@
 mod geom_man;
+mod scene_man;
 pub mod tex_man;
 
 use crate::first_back::geom_man::FirstBackGeometryManager;
+use crate::first_back::scene_man::FirstBackSceneManager;
 use crate::first_back::tex_man::FirstBackTextureManager;
 use f3_gfx::back::man_geom::ManageGeometries;
+use f3_gfx::back::man_scene::ManageScenes;
 use f3_gfx::back::man_tex::ManageTextures;
 use f3_gfx::back::GraphicsBackend;
 use slog::Logger;
@@ -11,6 +14,7 @@ use slog::Logger;
 pub struct FirstBack {
     tex_manager: FirstBackTextureManager,
     geom_manager: FirstBackGeometryManager,
+    scene_manager: FirstBackSceneManager,
     _logger: Logger,
 }
 
@@ -19,6 +23,7 @@ impl FirstBack {
         Self {
             tex_manager: FirstBackTextureManager::new(logger.clone()),
             geom_manager: FirstBackGeometryManager::new(logger.clone()),
+            scene_manager: FirstBackSceneManager::new(logger.clone()),
             _logger: logger,
         }
     }
@@ -39,5 +44,13 @@ impl GraphicsBackend for FirstBack {
 
     fn get_geometry_manager(&self) -> &dyn ManageGeometries {
         &self.geom_manager
+    }
+
+    fn get_mut_scene_manager(&mut self) -> &mut dyn ManageScenes {
+        &mut self.scene_manager
+    }
+
+    fn get_scene_manager(&self) -> &dyn ManageScenes {
+        &self.scene_manager
     }
 }
