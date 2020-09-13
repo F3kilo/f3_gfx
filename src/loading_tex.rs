@@ -1,8 +1,8 @@
 use crate::backend;
-use crate::backend::{LoadStatus, TexFuture, TexId, TexLoadResult};
+use crate::backend::{LoadStatus, TexFuture, TexLoadResult};
+use crate::tex_unloader::TexUnloader;
 use futures_util::core_reexport::task::Poll;
 use futures_util::core_reexport::time::Duration;
-use std::sync::mpsc::Sender;
 
 pub struct LoadingTex {
     state: LoadingTexState,
@@ -55,18 +55,4 @@ impl Drop for LoadingTex {
 enum LoadingTexState {
     Loading(TexFuture),
     Taken,
-}
-
-pub struct TexUnloader {
-    sender: Sender<TexId>,
-}
-
-impl TexUnloader {
-    pub fn new(sender: Sender<TexId>) -> Self {
-        Self { sender }
-    }
-
-    pub fn unload(&self, id: TexId) {
-        self.sender.send(id);
-    }
 }

@@ -6,6 +6,7 @@ pub struct TexData {}
 
 pub trait Backend {
     fn load_tex(&mut self, data: TexData) -> TexFuture;
+    fn unload_tex(&mut self, id: TexId);
 }
 
 pub type TexLoadResult = Result<TexId, LoadError>;
@@ -24,4 +25,5 @@ pub fn poll_future(future: &mut TexFuture) -> std::task::Poll<TexLoadResult> {
     Pin::poll(Pin::new(future), &mut context)
 }
 
+#[derive(Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct TexId(u64);
