@@ -19,3 +19,9 @@ impl Drop for Tex {
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct TexId(u64);
+
+impl From<u64> for TexId {
+    fn from(i: u64) -> Self {
+        Self(i)
+    }
+}

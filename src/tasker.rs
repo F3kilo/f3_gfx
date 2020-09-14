@@ -1,12 +1,15 @@
-use crate::task::Task;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{mpsc, Arc};
 use tokio::runtime::Runtime;
 
+pub type Task = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
+
 pub struct Tasker {
     rt: Arc<Runtime>,
-    sender: Sender<Box<dyn Task>>,
-    receiver: Receiver<Box<dyn Task>>,
+    sender: Sender<Task>,
+    receiver: Receiver<Task>,
 }
 
 impl Tasker {
@@ -17,6 +20,10 @@ impl Tasker {
             sender,
             receiver,
         }
+    }
+
+    pub fn get_sender(&self) -> Sender<Task> {
+        self.sender.clone()
     }
 
     pub fn start_tasks(&self) {
