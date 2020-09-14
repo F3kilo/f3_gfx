@@ -1,114 +1,65 @@
-use crate::backend;
-use crate::backend::{AddError, Backend, TexAddResult, TexData, TexId};
-use crate::tex_unloader::TexUnloader;
-use futures_util::core_reexport::task::Poll;
-use futures_util::core_reexport::time::Duration;
-use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::runtime::Runtime;
-use tokio::task::JoinHandle;
+use crate::resource_loader::{LoadResult, TexUnloader};
+use crate::tex::Tex;
+use log::warn;
+use std::sync::mpsc::{Receiver, TryRecvError};
+
+pub type TexLoadResult = LoadResult<Tex>;
 
 pub struct LoadingTex {
-    state: LoadingTexState,
+    recv: Option<Receiver<TexLoadResult>>,
     unloader: TexUnloader,
-    rt: Arc<Runtime>,
 }
 
 impl LoadingTex {
-    pub fn new(
-        path: PathBuf,
-        backend: &mut Box<dyn Backend>,
-        rt: Arc<Runtime>,
-        unloader: TexUnloader,
-    ) -> Self {
-        let handle = rt.spawn(Self::load_tex_async(path, backend));
-
+    pub fn new(recv: Receiver<LoadResult<Tex>>, unloader: TexUnloader) -> Self {
         Self {
-            state: LoadingTexState::Loading(handle),
+            recv: Some(recv),
             unloader,
-            rt,
         }
     }
 
-    pub fn status(&mut self) -> TexLoadStatus {
-        let load_status = match &mut self.state {
-            LoadingTexState::Loading(fut) => match backend::poll_future(fut) {
-                Poll::Ready(load_result) => TexLoadStatus::Ready(load_result),
-                Poll::Pending => TexLoadStatus::Loading,
-            },
-            LoadingTexState::Taken => TexLoadStatus::Taken,
+    pub fn try_take(&mut self) -> Result<TexLoadResult, TakeError> {
+        if let Some(recv) = &self.recv {
+            let received = recv.try_recv();
+            return match received {
+                Ok(tex_result) => {
+                    self.recv = None;
+                    Ok(tex_result)
+                }
+                Err(e) => match e {
+                    TryRecvError::Empty => Err(TakeError::NotReady),
+                    TryRecvError::Disconnected => {
+                        warn!("Try take loading texture, but receiver is disconnected.");
+                        Err(TakeError::NotAvailable)
+                    }
+                },
+            };
         };
 
-        if let TexLoadStatus::Ready(_) = &load_status {
-            self.state = LoadingTexState::Taken
+        Err(TakeError::AlreadyTaken)
+    }
+
+    pub fn wait_ready(&mut self) -> Result<TexLoadResult, TakeError> {
+        if let Some(recv) = &self.recv {
+            let received = recv.recv();
+            return match received {
+                Ok(tex_result) => {
+                    self.recv = None;
+                    Ok(tex_result)
+                }
+                Err(_) => {
+                    warn!("Wait for texture loading, but receiver is disconnected.");
+                    Err(TakeError::NotAvailable)
+                }
+            };
         };
-        load_status
-    }
 
-    pub fn wait_ready(&mut self) -> Option<TexAddResult> {
-        loop {
-            let status = self.status();
-            match status {
-                TexLoadStatus::Ready(load_result) => return Some(load_result),
-                TexLoadStatus::Taken => return None,
-                TexLoadStatus::Loading => std::thread::sleep(Duration::from_millis(16)),
-            }
-        }
-    }
-
-    async fn load_tex_async(path: PathBuf, back: &mut Box<dyn Backend>) -> TexLoadResult {
-        let tex_data = Self::read_tex_file(path).await?;
-        back.add_tex(tex_data).await.map_err(|e| e.into())
-    }
-
-    async fn read_tex_file(path: PathBuf) -> ReadTexResult {
-        Ok(TexData {}) // todo: actually read file
+        Err(TakeError::AlreadyTaken)
     }
 }
 
-impl Drop for LoadingTex {
-    fn drop(&mut self) {
-        if let Some(TexAddResult::Ok(id)) = self.wait_ready() {
-            self.unloader.unload(id)
-        }
-    }
-}
-
-enum LoadingTexState {
-    Loading(JoinHandle<TexLoadResult>),
-    Taken,
-}
-
-pub enum TexLoadStatus {
-    Ready(TexLoadResult),
-    Loading,
-    Taken,
-}
-
-type LoadResult<T> = Result<T, LoadError>;
-type TexLoadResult = LoadResult<TexId>;
-
-enum LoadError {
-    ReadError(ReadError),
-    AddError(AddError),
-}
-
-impl From<ReadError> for LoadError {
-    fn from(e: ReadError) -> Self {
-        LoadError::ReadError(e)
-    }
-}
-
-impl From<AddError> for LoadError {
-    fn from(e: AddError) -> Self {
-        LoadError::AddError(e)
-    }
-}
-
-type ReadResult<T> = Result<T, ReadError>;
-type ReadTexResult = ReadResult<TexData>;
-
-enum ReadError {
-    OpenError,
-    ParseError,
+pub enum TakeError {
+    NotReady,
+    NotAvailable,
+    AlreadyTaken,
 }

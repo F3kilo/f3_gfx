@@ -1,27 +1,25 @@
-use crate::backend::Backend;
-use crate::request::RequestProcessor;
+mod loading_tex;
+mod resource_loader;
+mod task;
+mod tasker;
+mod tex;
+
+use crate::resource_loader::ResourceLoader;
+use crate::tasker::Tasker;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 
-mod backend;
-mod loading_tex;
-mod request;
-mod tex_unloader;
-
 pub struct Graphics {
-    back: Box<dyn Backend>,
-    requests: RequestProcessor,
+    tasker: Tasker,
 }
 
 impl Graphics {
-    pub fn new(back: Box<dyn Backend>, rt: Arc<Runtime>) -> Self {
-        Self {
-            back,
-            requests: RequestProcessor::new(rt),
-        }
+    pub fn new(rt: Arc<Runtime>) -> Self {
+        let tasker = Tasker::new(rt);
+        Self { tasker }
     }
 
-    pub fn process_requests(&mut self) {
-        self.requests.process(&mut self.back);
+    pub fn get_resource_loader(&self) -> ResourceLoader {
+        ResourceLoader::new(self.tasker.get_sender())
     }
 }
