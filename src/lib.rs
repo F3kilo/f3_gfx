@@ -1,5 +1,7 @@
 use crate::backend::Backend;
 use crate::request::RequestProcessor;
+use std::sync::Arc;
+use tokio::runtime::Runtime;
 
 mod backend;
 mod loading_tex;
@@ -12,10 +14,10 @@ pub struct Graphics {
 }
 
 impl Graphics {
-    pub fn new(back: Box<dyn Backend>) -> Self {
+    pub fn new(back: Box<dyn Backend>, rt: Arc<Runtime>) -> Self {
         Self {
             back,
-            requests: RequestProcessor::new(),
+            requests: RequestProcessor::new(rt),
         }
     }
 

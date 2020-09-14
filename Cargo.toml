@@ -9,3 +9,7 @@ edition = "2018"
 [dependencies]
 futures-util = "0.3.5"
 log = "0.4.11"
+
+[dependencies.tokio]
+version = "0.2.22"
+features = ["rt-core"]

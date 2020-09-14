@@ -2,25 +2,19 @@ use std::future::Future;
 use std::pin::Pin;
 use std::task::Context;
 
-pub struct TexData {}
+pub struct TexData {} // todo: fill with data
 
-pub trait Backend {
-    fn load_tex(&mut self, data: TexData) -> TexFuture;
-    fn unload_tex(&mut self, id: TexId);
+pub trait Backend: Send {
+    fn add_tex(&mut self, data: TexData) -> TexFuture;
+    fn remove_tex(&mut self, id: TexId);
 }
 
-pub type TexLoadResult = Result<TexId, LoadError>;
-pub type TexFuture = Pin<Box<dyn Future<Output = TexLoadResult>>>;
+pub type TexAddResult = Result<TexId, AddError>;
+pub type TexFuture = Pin<Box<dyn Future<Output = TexAddResult> + Send>>;
 
-pub enum LoadStatus {
-    Ready(TexLoadResult),
-    Loading,
-    Taken,
-}
+pub struct AddError {} // todo: impl Error
 
-pub struct LoadError {}
-
-pub fn poll_future(future: &mut TexFuture) -> std::task::Poll<TexLoadResult> {
+pub fn poll_future(future: &mut TexFuture) -> std::task::Poll<TexAddResult> {
     let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
     Pin::poll(Pin::new(future), &mut context)
 }

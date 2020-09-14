@@ -1,9 +1,11 @@
-use crate::backend::{Backend, TexData, TexId};
+use crate::backend::{Backend, TexData, TexFuture, TexId};
 use crate::loading_tex::LoadingTex;
 use crate::tex_unloader::TexUnloader;
 use log::error;
-use std::sync::mpsc;
+use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{mpsc, Arc};
+use tokio::runtime::Runtime;
 
 pub struct UnloadTexRequest {
     tex_id: TexId,
@@ -20,8 +22,8 @@ impl UnloadTexRequest {
 }
 
 pub struct LoadTexRequest {
+    path: PathBuf,
     response: LoadTexResponse,
-    tex_data: TexData,
 }
 
 pub struct LoadTexResponse {
@@ -45,9 +47,9 @@ pub enum Request {
     UnloadTex(UnloadTexRequest),
 }
 
-impl From<LoadTexRequest> for (LoadTexResponse, TexData) {
+impl From<LoadTexRequest> for (LoadTexResponse, PathBuf) {
     fn from(request: LoadTexRequest) -> Self {
-        (request.response, request.tex_data)
+        (request.response, request.path)
     }
 }
 
@@ -60,12 +62,17 @@ impl From<UnloadTexRequest> for Request {
 pub struct RequestProcessor {
     sender: Sender<Request>,
     receiver: Receiver<Request>,
+    rt: Arc<Runtime>,
 }
 
 impl RequestProcessor {
-    pub fn new() -> Self {
+    pub fn new(rt: Arc<Runtime>) -> Self {
         let (sender, receiver) = mpsc::channel();
-        Self { sender, receiver }
+        Self {
+            sender,
+            receiver,
+            rt,
+        }
     }
 
     pub fn process(&mut self, backend: &mut Box<dyn Backend>) {
@@ -73,7 +80,7 @@ impl RequestProcessor {
         for request in requests {
             match request {
                 Request::LoadTex(load_tex) => self.load_texture(load_tex, backend),
-                Request::UnloadTex(unload_tex) => backend.unload_tex(unload_tex.id()),
+                Request::UnloadTex(unload_tex) => backend.remove_tex(unload_tex.id()),
             }
         }
     }
@@ -83,8 +90,12 @@ impl RequestProcessor {
     }
 
     fn load_texture(&mut self, load_tex_request: LoadTexRequest, backend: &mut Box<dyn Backend>) {
-        let (response, data) = load_tex_request.into();
-        let tex_fut = backend.load_tex(data);
-        response.send(LoadingTex::new(tex_fut, self.tex_unloader()));
+        let (response, path) = load_tex_request.into();
+        response.send(LoadingTex::new(
+            path,
+            backend,
+            self.rt.clone(),
+            self.tex_unloader(),
+        ));
     }
 }
