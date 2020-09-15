@@ -1,8 +1,11 @@
 use crate::loading_tex::TexLoadResult;
+use crate::resource_loader::LoadError;
 use crate::tex::{Tex, TexId};
 use log::warn;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::Sender;
+use tokio::io::Error;
 
 pub async fn load_and_send(
     path: PathBuf,
@@ -42,12 +45,21 @@ pub struct TexReader {}
 
 impl TexReader {
     pub async fn read(&self, path: &Path) -> ReadResult {
-        todo!()
+        let file_data = tokio::fs::read(path).await?;
+        Ok(TexData {})
     }
 }
 
 pub type ReadResult = Result<TexData, ReadError>;
-pub struct ReadError;
+pub enum ReadError {
+    IoError(io::Error),
+}
+
+impl From<io::Error> for ReadError {
+    fn from(e: Error) -> Self {
+        ReadError::IoError(e)
+    }
+}
 
 pub async fn unload_tex(remover: TexRemover, id: TexId) {
     remover.remove(id).await;

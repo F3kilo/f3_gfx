@@ -13,4 +13,4 @@ async-trait = "0.1.40"
 
 [dependencies.tokio]
 version = "0.2.22"
-features = ["rt-core"]
+features = ["rt-core", "fs"]
